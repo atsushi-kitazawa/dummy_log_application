@@ -1,0 +1,3 @@
+timestamp: 2006-01-02 03:04:05
+logFormat: "%s %s 【%s】 %s"
+param: [aaa, bbb, ccc]
