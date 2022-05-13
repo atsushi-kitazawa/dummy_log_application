@@ -1,3 +1,6 @@
 timestamp: 2006-01-02 03:04:05
-logFormat: "%s %s 【%s】 %s"
-param: [aaa, bbb, ccc]
+logFormat: "%s %s 【%s】 %s\n"
+startLogParam: [INFO, 実行開始, started]
+logParam: [INFO, アクション, aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee]
+endLogParam: [INFO, 実行終了, ended]
+file: test.log

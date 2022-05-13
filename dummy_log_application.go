@@ -1,36 +1,71 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"gopkg.in/yaml.v2"
 )
 
 type settings struct {
-	Timestamp string   `yaml:"timestamp"`
-	LogFormat string   `yaml:"logFormat"`
-	Param     []string `yaml:"param"`
+	Timestamp     string   `yaml:"timestamp"`
+	LogFormat     string   `yaml:"logFormat"`
+	StartLogParam []string `yaml:"startLogParam"`
+	LogParam      []string `yaml:"logParam"`
+	EndLogParam   []string `yaml:"endLogParam"`
+	File          string   `yaml:"file"`
 }
 
-var s settings
+var (
+	s    settings
+	cnt  int
+	mode string
+)
 
 func main() {
+	flag.IntVar(&cnt, "cnt", 10, "log count")
+	flag.StringVar(&mode, "mode", "append", "output mode")
+	flag.Parse()
+
 	load()
 	doMain()
 }
 
 func doMain() {
-	timestamp := time.Now().Format("2006-01-02 03:04:05")
-	msgs := []interface{}{timestamp, "INFO", "start", "messages."}
-	fmt.Fprintf(os.Stdout, logTemplate(), msgs...)
+	if !exists(s.File) {
+		create(s.File)
+	} else {
+		if "clear" == mode {
+			remove(s.File)
+			create(s.File)
+		}
+	}
+
+	f, err := os.OpenFile(s.File, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer f.Close()
+
+	msgs := []interface{}{time.Now().Format(s.Timestamp), s.StartLogParam[0], s.StartLogParam[1], s.StartLogParam[2]}
+	fmt.Fprintf(f, s.LogFormat, msgs...)
+
+	for i := 1; i <= cnt; i++ {
+		msgs = []interface{}{time.Now().Format(s.Timestamp), s.LogParam[0], s.LogParam[1], s.LogParam[2] + strconv.Itoa(i)}
+		fmt.Fprintf(f, s.LogFormat, msgs...)
+	}
+
+	msgs = []interface{}{time.Now().Format(s.Timestamp), s.EndLogParam[0], s.EndLogParam[1], s.EndLogParam[2]}
+	fmt.Fprintf(f, s.LogFormat, msgs...)
 }
 
 func load() {
-	f, err := os.Open("settings.yml")
+	f, err := os.Open("./settings.yml")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -45,10 +80,23 @@ func load() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	fmt.Println(s)
 }
 
-func logTemplate() string {
-	return "%s %s 【%s】 %s\n"
+func exists(name string) bool {
+	_, err := os.Stat(name)
+	return !os.IsNotExist(err)
+}
+
+func create(name string) {
+	_, err := os.Create(s.File)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func remove(name string) {
+	err := os.Remove(s.File)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
