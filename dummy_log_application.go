@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -37,16 +38,16 @@ func main() {
 }
 
 func doMain() {
-	if !exists(s.File) {
-		create(s.File)
+	if !exists(exePath() + "/" + s.File) {
+		create(exePath() + "/" + s.File)
 	} else {
 		if "clear" == mode {
-			remove(s.File)
-			create(s.File)
+			remove(exePath() + "/" + s.File)
+			create(exePath() + "/" + s.File)
 		}
 	}
 
-	f, err := os.OpenFile(s.File, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	f, err := os.OpenFile(exePath()+"/"+s.File, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -65,7 +66,7 @@ func doMain() {
 }
 
 func load() {
-	f, err := os.Open("./settings.yml")
+	f, err := os.Open(exePath() + "/settings.yml")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -99,4 +100,10 @@ func remove(name string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func exePath() string {
+	exe, _ := os.Executable()
+	path := filepath.Dir(exe)
+	return path
 }
